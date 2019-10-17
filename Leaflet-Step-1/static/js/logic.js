@@ -3,7 +3,7 @@
 // Create a map object
 var vMap = L.map("map", {
   center: [37.09, -95.71],
-  zoom: 3,
+  zoom: 4,
 });
 
 
@@ -32,41 +32,50 @@ function getInfo(mag) {
 
 function addMarkers ( response ) {
 
-  console.log("Geometry ", response.features[0].geometry.coordinates) ;
-  console.log(response);
-
   // Loop through the cities array and create one marker for each record object
   for (var i = 0; i < response.metadata.count; i++) {
 
+    // REMARKS: There are some earthquakes with negative magnitudes.
+
+    // Assign the magnitude to a variable
+    var mag = response.features[i].properties.mag;
+
     // Conditionals for colors
     var color = "";
-    if (response.features[i].properties.mag > 2) {
-      color = "yellow";
+    if (mag <= 1) {
+      color = "#e474d6";
     }
-    else if (response.features[i].properties.mag > 5) {
-      color = "blue";
+    else if (mag <= 2) {
+      color = "#e474d6";
     }
-    else if (response.features[i].properties.mag > 7) {
-      color = "green";
+    else if (mag <= 3 ) {
+      color = "#e474d6";
+    }
+    else if (mag <= 4 ) {
+      color = "#d732d1";
+    }
+    else if (mag <= 5 ) {
+      color = "#5b005b";
     }
     else {
-      color = "purple";
+      color = "#340034";
     }
 
     // Get the coordinates
     var coordinates = [ response.features[i].geometry.coordinates[1], response.features[i].geometry.coordinates[0]];
-    var mag = response.features[i].properties.mag;
+    
 
     var moreInfo = getInfo(mag);
 
     // Add circles to map
     L.circle(coordinates, {
-      stroke: false,
-      record: 0.75,
+      stroke: true,
+      fillOpacity: 0.5,
+      weight: 1,
       color: "white",
       fillColor: color,
-      radius: mag * 30000
-    }).bindPopup("<spam><strong>" + response.features[i].properties.place + "</strong></span>" +
+      radius: mag * 25000
+    }).bindPopup("<h3>" + response.features[i].properties.place + "</h3>" +
                  "<hr>" +
                  "<span>Magnitude: " + mag + "</span><br>" + 
                  "<span>Effect: " + moreInfo.effect + "</span><br>" +
@@ -80,4 +89,24 @@ const earthquakeURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary
 // Perform an API call to the Citi Bike Station Information endpoint
 d3.json(earthquakeURL,  addMarkers );
 
+// Create a legend to display information about our map
+var info = L.control({
+  position: "bottomright"
+});
 
+// When the layer control is added, insert a div with the class of "legend"
+info.onAdd = function() {
+  var div = L.DomUtil.create("div", "color-scale");
+  return div;
+};
+// Add the info color-scale to the map
+info.addTo(vMap);
+
+document.querySelector(".color-scale").innerHTML = [
+  "<span class='color1'></span><p class='color-range'>0 - 1</p>",
+  "<span class='color2'></span><p class='color-range'>1 - 2</p>",
+  "<span class='color3'></span><p class='color-range'>2 - 3</p>",
+  "<span class='color4'></span><p class='color-range'>3 - 4</p>",
+  "<span class='color5'></span><p class='color-range'>4 - 5</p>",
+  "<span class='color6'></span><p class='color-range'> 5+  </p>"
+].join("");

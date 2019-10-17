@@ -10,3 +10,48 @@ body,
 html {
   height: 100%;
 }
+
+.color-scale {
+  background-color: #FFFFFF;
+  border-radius: 3px;
+  width: 70px;
+}
+.color-range {
+  margin-left: 5px;
+}
+
+.color1 {
+  background-color: #e474d6;
+  min-width: 30px;
+}
+.color2 {
+  background-color: #e474d6;
+  min-width: 30px;
+}
+.color3 {
+  background-color: #e474d6;
+  min-width: 30px;
+}
+.color4 {
+  background-color: #d732d1;
+  min-width: 30px;
+}
+.color5 {
+  background-color: #5b005b;
+  min-width: 30px;
+}
+.color6 {
+  background-color: #340034;
+  min-width: 30px;
+}
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
