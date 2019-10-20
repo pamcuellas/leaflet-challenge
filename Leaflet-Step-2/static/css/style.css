@@ -27,7 +27,6 @@ html {
 .box-color{
   font-size: 10px;
   padding: 0px;
-  margin: 0px;
   opacity: 0.8;
   border-radius: 3px;
   margin: 1px;
@@ -36,6 +35,22 @@ html {
 }
 
 
+@media screen and (max-height: 400px) {
+  
+  .box-color{
+    font-size: 7px;
+    opacity: 0.8;
+    border-radius: 1px;
+    height: 17px!important;
+    width: 17px!important;
+    margin: 0px;
+  }
+  .color-range {
+    margin: 3px;
+    font-size: 8px;
+  }
+
+}
  
 
  
