@@ -3,25 +3,54 @@
 // URL to get the Earthquake data.
 const earthquakeURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
-// Create a map object
+// Create the map
 var vMap = L.map("map", {
   center: [37.09, -95.71],
-  zoom: 4,
+  zoom: 4
 });
 
-
-L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+// Define maps styles
+var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
   attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
   maxZoom: 18,
-  id: "mapbox.streets-basic",
+  id: "mapbox.streets",
   accessToken: API_KEY
-}).addTo(vMap);
+}).addTo( vMap ); // Add a basemap;
+
+var satellite = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+  maxZoom: 18,
+  id: "satellite-streets-v9",
+  accessToken: API_KEY
+});
+
+var light = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+  maxZoom: 18,
+  id: "light-v9",
+  accessToken: API_KEY
+});
+
+var outdoors = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+  maxZoom: 18,
+  id: "outdoors-v9",
+  accessToken: API_KEY
+});
+
+var dark = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+  maxZoom: 18,
+  id: "dark-v9",
+  accessToken: API_KEY
+});
 
 // Function to get Additional Earthquake information and colorScale (source data.js)
 function getInfo(mag, source) {
   return source.find( obj => (obj.magInterval[0] <= mag && mag < obj.magInterval[1]) );
 }
 
+var earthquakeMarkers = [];
 function addMarkers ( response ) {
 
   // Loop through the cities array and create one marker for each record object
@@ -40,25 +69,67 @@ function addMarkers ( response ) {
     // Get more information to present on tooltip.
     var moreInfo = getInfo(mag, additionalEarthquakeInfo);
 
-    // Add circles to map
-    L.circle(coordinates, {
+    // Add circles to earthquakeMarkers
+    earthquakeMarkers.push(  L.circle(coordinates, {
       stroke: true,
       fillOpacity: 0.7,
       weight: 1,
       color: "white",
       fillColor: color,
-      radius: mag * 25000
-    }).bindPopup("<h3>" + response.features[i].properties.place + "</h3>" +
+      radius: mag * 40000
+    } ).bindPopup("<h3>" + response.features[i].properties.place + "</h3>" +
                  "<hr>" +
                  "<span>Magnitude: " + mag + "</span><br>" + 
                  "<span>Effect: " + moreInfo.effect + "</span><br>" +
                  "<span>Estimate number each year: " + moreInfo.freqYear + "</span>"
-                 ).addTo(vMap);
+                 )
+    );
+   }
+
+  // create a layer for Fault Lines
+  let faultLinesLayer = L.layerGroup();
+
+  // Fill that layer with tectonic plates data
+  d3.json('./static/data/PB2002_plates.json', function( data ){
+    L.geoJSON( data, {
+      onEachFeature: addMyData,
+    });
+  });
+
+  // This function is run for every feature found in the geojson file. 
+  function addMyData( feature, layer ){
+    faultLinesLayer.addLayer( layer );
+    // some other code can go here, like adding a popup with layer.bindPopup("Hello")
   }
+
+  // Fill the earthquake layer
+  let earthquakeLayer = L.layerGroup(earthquakeMarkers);
+
+  // Add layears to the map;
+  faultLinesLayer.addTo( vMap );
+  earthquakeLayer.addTo( vMap );
+
+  // Map styles options to appear in the control box.
+  let basemapControl = {
+    "Streets": streetmap,
+    "Satellite": satellite,
+    "Grayscale": light,
+    "Outdoors": outdoors,
+    "Dark Map": dark
+  };
+
+  // Data layers options in the control box.  
+  let layerControl = {
+    "Fault Lines": faultLinesLayer,  
+    "Earthquake": earthquakeLayer,
+  };
+
+  // Add the control component, a layer list with checkboxes for operational layers and radio buttons for basemaps
+  L.control.layers( basemapControl, layerControl ).addTo( vMap );
+
 }
 
-
-// Perform the API call to get data
+// Perform the API call to get earthquake data
 d3.json(earthquakeURL,  addMarkers );
 
 // Create a legend for color scale
@@ -77,29 +148,10 @@ info.addTo(vMap);
 
 // Legend for color scale.
 document.querySelector(".color-scale").innerHTML = [
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(0,colorScale).color + ";'></div><p class='color-range'>0-1</p></div>",
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(1,colorScale).color + ";'></div><p class='color-range'>1-2</p></div>",
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(2,colorScale).color + ";'></div><p class='color-range'>2-3</p></div>",
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(3,colorScale).color + ";'></div><p class='color-range'>3-4</p></div>",
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(4,colorScale).color + ";'></div><p class='color-range'>4-5</p></div>",
-  "<div class='color-range-container'><div class='box-color' style='background:" + getInfo(5,colorScale).color + ";'></div><p class='color-range'> 5+</p></div>"
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(0,colorScale).color + ";'></div><p class='color-range'>0-1</p></div>",
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(1,colorScale).color + ";'></div><p class='color-range'>1-2</p></div>",
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(2,colorScale).color + ";'></div><p class='color-range'>2-3</p></div>",
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(3,colorScale).color + ";'></div><p class='color-range'>3-4</p></div>",
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(4,colorScale).color + ";'></div><p class='color-range'>4-5</p></div>",
+  "<div class='item-container'><div class='box-color' style='background:" + getInfo(5,colorScale).color + ";'></div><p class='color-range'> 5+</p></div>"
 ].join("");
-
-
-// Uncomment this link local geojson for when data.beta.nyc is down
-var link = "./static/data/PB2002_plates.json";
-
-// Grabbing our GeoJSON data..
-d3.json(link, function(data) {
-  // Creating a geoJSON layer with the retrieved data
-  L.geoJson(data, {
-    style: function(feature) {
-      return {
-        color: "rgba(0,100,100, 0.5)",
-        fillOpacity: 0,
-        weight: 1
-      };
-    }
-  }).addTo(vMap);
-});
-
