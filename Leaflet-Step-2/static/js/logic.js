@@ -143,7 +143,6 @@ function addMarkers ( response ) {
 
   // Add the control component, a layer list with checkboxes for operational layers and radio buttons for basemaps
   L.control.layers( basemapControl, layerControl ).addTo( vMap );
-
 }
 
 // Perform the API call to get earthquake data
@@ -160,7 +159,7 @@ info.onAdd = function() {
   return div;
 };
 
-// Add the legend to the map
+// Add the colors legend to the map
 info.addTo(vMap);
 
 // Legend for color scale.
