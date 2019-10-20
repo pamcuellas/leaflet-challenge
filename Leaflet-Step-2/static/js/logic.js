@@ -5,22 +5,22 @@ const earthquakeURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary
 
 // Create the map
 var vMap = L.map("map", {
-  center: [37.09, -95.71],
+  center: [44, -95.71], // [37.09, -95.71],
   zoom: 4
 });
 
 // Define maps styles
-var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-  maxZoom: 18,
-  id: "mapbox.streets",
-  accessToken: API_KEY
-}).addTo( vMap ); // Add a basemap;
-
 var satellite = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
   attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
   maxZoom: 18,
   id: "satellite-streets-v9",
+  accessToken: API_KEY
+}).addTo( vMap ); // Add a basemap
+
+var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+  attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+  maxZoom: 18,
+  id: "mapbox.streets",
   accessToken: API_KEY
 });
 
@@ -50,7 +50,15 @@ function getInfo(mag, source) {
   return source.find( obj => (obj.magInterval[0] <= mag && mag < obj.magInterval[1]) );
 }
 
+// Create variable to store earthquake circles.
 var earthquakeMarkers = [];
+
+// Create panes to garantee that earthquake tooltips are always available for users.
+// Otherwise, Fault Lines will be on top of the map and earthquake tooltips will be inaccessible.
+var pane = vMap.createPane("paneZindex");
+pane.style.zIndex = 500;
+
+// Function to create layers structure and add to the map
 function addMarkers ( response ) {
 
   // Loop through the cities array and create one marker for each record object
@@ -76,43 +84,52 @@ function addMarkers ( response ) {
       weight: 1,
       color: "white",
       fillColor: color,
-      radius: mag * 40000
-    } ).bindPopup("<h3>" + response.features[i].properties.place + "</h3>" +
-                 "<hr>" +
-                 "<span>Magnitude: " + mag + "</span><br>" + 
-                 "<span>Effect: " + moreInfo.effect + "</span><br>" +
-                 "<span>Estimate number each year: " + moreInfo.freqYear + "</span>"
+      radius: mag * 40000,
+      pane: "paneZindex"
+    } ).bindPopup( 
+                  "<h3>" + response.features[i].properties.place + "</h3>" +
+                  "<hr>" +
+                  "<span>Magnitude: " + mag + "</span><br>" + 
+                  "<span>Effect: " + moreInfo.effect + "</span><br>" +
+                  "<span>Estimate number each year: " + moreInfo.freqYear + "</span>"  
                  )
     );
    }
 
-  // create a layer for Fault Lines
+  // Create a layer for Fault Lines
   let faultLinesLayer = L.layerGroup();
+
+  // Set style for Fault Lines layer
+  var geoJsonStyle = {
+    color: "rgba(0,100,100, 0.5)",
+    fillOpacity: 0,
+    weight: 1
+  };
 
   // Fill that layer with tectonic plates data
   d3.json('./static/data/PB2002_plates.json', function( data ){
     L.geoJSON( data, {
-      onEachFeature: addMyData,
+      style: geoJsonStyle,
+      onEachFeature: addFaultLinesData,
     });
   });
 
   // This function is run for every feature found in the geojson file. 
-  function addMyData( feature, layer ){
+  function addFaultLinesData( feature, layer ){
     faultLinesLayer.addLayer( layer );
-    // some other code can go here, like adding a popup with layer.bindPopup("Hello")
   }
 
   // Fill the earthquake layer
   let earthquakeLayer = L.layerGroup(earthquakeMarkers);
 
   // Add layears to the map;
-  faultLinesLayer.addTo( vMap );
   earthquakeLayer.addTo( vMap );
+  faultLinesLayer.addTo( vMap );
 
   // Map styles options to appear in the control box.
   let basemapControl = {
-    "Streets": streetmap,
     "Satellite": satellite,
+    "Streets": streetmap,
     "Grayscale": light,
     "Outdoors": outdoors,
     "Dark Map": dark
