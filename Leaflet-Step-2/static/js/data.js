@@ -10,9 +10,10 @@ const additionalEarthquakeInfo = [
 {magInterval: [8.0  , 1000], effect:"Can totally destroy communities near the epicenter.",   freqYear: "One every 5 to 10 years"}
 ];
 
+// Color scale for legend and earthquake magnitude circles.
 const colorScale = [
-{magInterval: [-1000,   1], color: "#ffbdff"},
-{magInterval: [    1,   2], color: "#ff82ff"},
+{magInterval: [-1000,   1], color: "#ffe4ff"},
+{magInterval: [    1,   2], color: "#ffa9ff"},
 {magInterval: [    2,   3], color: "#e474d6"},
 {magInterval: [    3,   4], color: "#d732d1"},
 {magInterval: [    4,   5], color: "#820082"},
