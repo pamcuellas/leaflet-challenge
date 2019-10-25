@@ -5,5 +5,5 @@ In this Leaflet map application, we can check out how the earthquakes are closel
 #### Leaflet, GeoJSON, D3, HTML5, and CSS3 are the technologies used to build this application.
 
 #### The app is available on the link below if you consider to check it out.
-https://pamcuellas.github.io/leaflet-challenge/Leaflet-Step-2/
+https://leaflet-geojson-earthquake.herokuapp.com/
 
